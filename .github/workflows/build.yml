@@ -1,0 +1,1181 @@
+name: Build Farmo Watch APK
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Install Android Platform 34 and Build Tools
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses || true
+          $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
+
+      - name: Generate Complete APK Project Files
+        run: |
+          mkdir -p app/src/main/java/com/fomo/earn
+          mkdir -p app/src/main/res/drawable
+          mkdir -p app/src/main/res/layout
+          mkdir -p app/src/main/res/xml
+          mkdir -p app/src/main/res/values
+
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+
+          cat << 'EOF' > gradle.properties
+          android.useAndroidX=true
+          android.enableJetifier=true
+          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+          EOF
+
+          cat << 'EOF' > settings.gradle
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+          rootProject.name = "FARMO EARN"
+          include ':app'
+          EOF
+
+          cat << 'EOF' > build.gradle
+          plugins {
+              id 'com.android.application' version '8.2.2' apply false
+          }
+          EOF
+
+          cat << 'EOF' > app/build.gradle
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.fomo.earn'
+              compileSdk 34
+
+              defaultConfig {
+                  applicationId "com.fomo.earn"
+                  minSdk 24
+                  targetSdk 34
+                  versionCode 1
+                  versionName "1.0.0"
+              }
+
+              buildTypes {
+                  release {
+                      minifyEnabled false
+                  }
+                  debug {
+                      minifyEnabled false
+                  }
+              }
+
+              compileOptions {
+                  sourceCompatibility JavaVersion.VERSION_17
+                  targetCompatibility JavaVersion.VERSION_17
+              }
+          }
+
+          dependencies {
+              implementation 'androidx.appcompat:appcompat:1.6.1'
+              implementation 'com.google.android.material:material:1.11.0'
+              implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+          }
+          EOF
+
+          # AI-Designed Cyberpunk Hex-Shield Logo
+          cat << 'EOF' > app/src/main/res/drawable/ic_fomo_logo.xml
+          <vector xmlns:android="http://schemas.android.com/apk/res/android"
+              android:width="128dp"
+              android:height="128dp"
+              android:viewportWidth="128"
+              android:viewportHeight="128">
+              <!-- Dark Futuristic Backdrop -->
+              <path android:fillColor="#080214" android:pathData="M0,0h128v128h-128z"/>
+              <!-- Outer Glowing Cyber Ring -->
+              <path android:fillColor="#7C3AED" android:pathData="M64,6 A58,58 0 1 0 64,122 A58,58 0 1 0 64,6 Z"/>
+              <path android:fillColor="#0C051F" android:pathData="M64,12 A52,52 0 1 0 64,116 A52,52 0 1 0 64,12 Z"/>
+              <!-- Neon Cyan Accent Ring -->
+              <path android:fillColor="#06B6D4" android:pathData="M64,18 A46,46 0 1 0 64,110 A46,46 0 1 0 64,18 Z"/>
+              <path android:fillColor="#12072B" android:pathData="M64,22 A42,42 0 1 0 64,106 A42,42 0 1 0 64,22 Z"/>
+              <!-- Inner Golden Shield/Coin Layer -->
+              <path android:fillColor="#F59E0B" android:pathData="M64,28 L98,46 L98,82 L64,100 L30,82 L30,46 Z"/>
+              <path android:fillColor="#FBBF24" android:pathData="M64,33 L92,48 L92,80 L64,95 L36,80 L36,48 Z"/>
+              <!-- 3D Play Triangle -->
+              <path android:fillColor="#1E0B38" android:pathData="M52,44 L86,64 L52,84 Z"/>
+              <path android:fillColor="#FFFFFF" android:pathData="M54,48 L80,64 L54,80 Z"/>
+          </vector>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/values/strings.xml
+          <resources>
+              <string name="app_name">Farmo Earn</string>
+              <string name="accessibility_service_desc">Farmo Earn Assistant monitors YouTube tasks, pauses on advertisements, and manages continuous video looping.</string>
+          </resources>
+          EOF
+
+          cat << 'EOF' > app/src/main/res/xml/accessibility_service_config.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+              android:accessibilityEventTypes="typeWindowStateChanged|typeWindowContentChanged"
+              android:accessibilityFeedbackType="feedbackGeneric"
+              android:accessibilityFlags="flagDefault|flagRetrieveInteractiveWindows"
+              android:canRetrieveWindowContent="true"
+              android:description="@string/accessibility_service_desc"
+              android:notificationTimeout="80"
+              android:packageNames="com.google.android.youtube" />
+          EOF
+
+          # Splash Screen Layout (Shows stunning AI Logo before loading Website)
+          cat << 'EOF' > app/src/main/res/layout/activity_splash.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#080214">
+
+              <LinearLayout
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_centerInParent="true"
+                  android:gravity="center"
+                  android:orientation="vertical">
+
+                  <ImageView
+                      android:layout_width="110dp"
+                      android:layout_height="110dp"
+                      android:src="@drawable/ic_fomo_logo" />
+
+                  <TextView
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginTop="20dp"
+                      android:text="FARMO EARN"
+                      android:textColor="#FFFFFF"
+                      android:textSize="24sp"
+                      android:textStyle="bold"
+                      android:letterSpacing="0.08" />
+
+                  <TextView
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:layout_marginTop="6dp"
+                      android:text="Official Autonomous Video Network"
+                      android:textColor="#A78BFA"
+                      android:textSize="12sp" />
+              </LinearLayout>
+          </RelativeLayout>
+          EOF
+
+          # Main Activity Layout (Houses Website in Full Screen)
+          cat << 'EOF' > app/src/main/res/layout/activity_main.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#0C051F">
+
+              <WebView
+                  android:id="@+id/mainWebView"
+                  android:layout_width="match_parent"
+                  android:layout_height="match_parent" />
+          </RelativeLayout>
+          EOF
+
+          # Permissions Setup Layout (Only opens when permissions needed)
+          cat << 'EOF' > app/src/main/res/layout/activity_permission_setup.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="#080214"
+              android:orientation="vertical"
+              android:padding="24dp">
+
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="16dp"
+                  android:text="Permissions Setup"
+                  android:textColor="#FFFFFF"
+                  android:textSize="22sp"
+                  android:textStyle="bold" />
+
+              <TextView
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:layout_marginTop="6dp"
+                  android:text="Enable required permissions to allow YouTube video automation."
+                  android:textColor="#9CA3AF"
+                  android:textSize="12sp" />
+
+              <LinearLayout
+                  android:layout_width="match_parent"
+                  android:layout_height="0dp"
+                  android:layout_weight="1"
+                  android:gravity="center_vertical"
+                  android:orientation="vertical">
+
+                  <!-- 1. Accessibility -->
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="#160D33"
+                      android:orientation="horizontal"
+                      android:padding="16dp"
+                      android:gravity="center_vertical"
+                      android:layout_marginBottom="12dp">
+                      <LinearLayout
+                          android:layout_width="0dp"
+                          android:layout_height="wrap_content"
+                          android:layout_weight="1"
+                          android:orientation="vertical">
+                          <TextView
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="Accessibility Service"
+                              android:textColor="#FFFFFF"
+                              android:textSize="13sp"
+                              android:textStyle="bold" />
+                          <TextView
+                              android:id="@+id/tvStatus1"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="✗ Permission Required"
+                              android:textColor="#EF4444"
+                              android:textSize="10sp" />
+                      </LinearLayout>
+                      <Button
+                          android:id="@+id/btnGrant1"
+                          android:layout_width="wrap_content"
+                          android:layout_height="36dp"
+                          android:backgroundTint="#7C3AED"
+                          android:text="Grant"
+                          android:textSize="11sp" />
+                  </LinearLayout>
+
+                  <!-- 2. Overlay -->
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="#160D33"
+                      android:orientation="horizontal"
+                      android:padding="16dp"
+                      android:gravity="center_vertical"
+                      android:layout_marginBottom="12dp">
+                      <LinearLayout
+                          android:layout_width="0dp"
+                          android:layout_height="wrap_content"
+                          android:layout_weight="1"
+                          android:orientation="vertical">
+                          <TextView
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="Display Over Other Apps"
+                              android:textColor="#FFFFFF"
+                              android:textSize="13sp"
+                              android:textStyle="bold" />
+                          <TextView
+                              android:id="@+id/tvStatus2"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="✗ Permission Required"
+                              android:textColor="#EF4444"
+                              android:textSize="10sp" />
+                      </LinearLayout>
+                      <Button
+                          android:id="@+id/btnGrant2"
+                          android:layout_width="wrap_content"
+                          android:layout_height="36dp"
+                          android:backgroundTint="#7C3AED"
+                          android:text="Grant"
+                          android:textSize="11sp" />
+                  </LinearLayout>
+
+                  <!-- 3. System Settings -->
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="#160D33"
+                      android:orientation="horizontal"
+                      android:padding="16dp"
+                      android:gravity="center_vertical"
+                      android:layout_marginBottom="12dp">
+                      <LinearLayout
+                          android:layout_width="0dp"
+                          android:layout_height="wrap_content"
+                          android:layout_weight="1"
+                          android:orientation="vertical">
+                          <TextView
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="Modify System Settings"
+                              android:textColor="#FFFFFF"
+                              android:textSize="13sp"
+                              android:textStyle="bold" />
+                          <TextView
+                              android:id="@+id/tvStatus3"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="✗ Permission Required"
+                              android:textColor="#EF4444"
+                              android:textSize="10sp" />
+                      </LinearLayout>
+                      <Button
+                          android:id="@+id/btnGrant3"
+                          android:layout_width="wrap_content"
+                          android:layout_height="36dp"
+                          android:backgroundTint="#7C3AED"
+                          android:text="Grant"
+                          android:textSize="11sp" />
+                  </LinearLayout>
+
+                  <!-- 4. Battery Optimization -->
+                  <LinearLayout
+                      android:layout_width="match_parent"
+                      android:layout_height="wrap_content"
+                      android:background="#160D33"
+                      android:orientation="horizontal"
+                      android:padding="16dp"
+                      android:gravity="center_vertical"
+                      android:layout_marginBottom="12dp">
+                      <LinearLayout
+                          android:layout_width="0dp"
+                          android:layout_height="wrap_content"
+                          android:layout_weight="1"
+                          android:orientation="vertical">
+                          <TextView
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="Ignore Battery Optimization"
+                              android:textColor="#FFFFFF"
+                              android:textSize="13sp"
+                              android:textStyle="bold" />
+                          <TextView
+                              android:id="@+id/tvStatus4"
+                              android:layout_width="wrap_content"
+                              android:layout_height="wrap_content"
+                              android:text="✗ Permission Required"
+                              android:textColor="#EF4444"
+                              android:textSize="10sp" />
+                      </LinearLayout>
+                      <Button
+                          android:id="@+id/btnGrant4"
+                          android:layout_width="wrap_content"
+                          android:layout_height="36dp"
+                          android:backgroundTint="#7C3AED"
+                          android:text="Grant"
+                          android:textSize="11sp" />
+                  </LinearLayout>
+              </LinearLayout>
+
+              <Button
+                  android:id="@+id/btnContinueToApp"
+                  android:layout_width="match_parent"
+                  android:layout_height="52dp"
+                  android:text="START WATCHING"
+                  android:textColor="#FFFFFF"
+                  android:textStyle="bold"
+                  android:backgroundTint="#10B981"
+                  android:visibility="gone" />
+          </LinearLayout>
+          EOF
+
+          # Floating Progress Strip on YouTube (0/15 + Working STOP Button)
+          cat << 'EOF' > app/src/main/res/layout/overlay_timer.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/overlayRoot"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:background="#EB0C051F"
+              android:paddingStart="14dp"
+              android:paddingTop="8dp"
+              android:paddingEnd="14dp"
+              android:paddingBottom="8dp"
+              android:orientation="horizontal"
+              android:gravity="center_vertical"
+              android:elevation="24dp">
+
+              <LinearLayout
+                  android:layout_width="wrap_content"
+                  android:layout_height="wrap_content"
+                  android:orientation="vertical"
+                  android:layout_marginEnd="12dp">
+
+                  <TextView
+                      android:id="@+id/tvCounterProgress"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="0/15"
+                      android:textColor="#10B981"
+                      android:textSize="14sp"
+                      android:textStyle="bold" />
+
+                  <TextView
+                      android:id="@+id/tvPlayStatus"
+                      android:layout_width="wrap_content"
+                      android:layout_height="wrap_content"
+                      android:text="● Playing"
+                      android:textColor="#A78BFA"
+                      android:textSize="9sp" />
+              </LinearLayout>
+
+              <!-- Dedicated STOP Button on Overlay -->
+              <Button
+                  android:id="@+id/btnOverlayStop"
+                  android:layout_width="wrap_content"
+                  android:layout_height="32dp"
+                  android:minWidth="54dp"
+                  android:paddingStart="8dp"
+                  android:paddingEnd="8dp"
+                  android:text="STOP"
+                  android:textColor="#FFFFFF"
+                  android:textSize="10sp"
+                  android:textStyle="bold"
+                  android:backgroundTint="#EF4444" />
+          </LinearLayout>
+          EOF
+
+          cat << 'EOF' > app/src/main/AndroidManifest.xml
+          <?xml version="1.0" encoding="utf-8"?>
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+              xmlns:tools="http://schemas.android.com/tools">
+
+              <uses-permission android:name="android.permission.INTERNET" />
+              <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+              <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+              <uses-permission android:name="android.permission.WRITE_SETTINGS" tools:ignore="ProtectedPermissions" />
+              <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+              <queries>
+                  <package android:name="com.google.android.youtube" />
+                  <intent>
+                      <action android:name="android.intent.action.VIEW" />
+                      <data android:scheme="https" />
+                  </intent>
+              </queries>
+
+              <application
+                  android:allowBackup="true"
+                  android:icon="@drawable/ic_fomo_logo"
+                  android:label="@string/app_name"
+                  android:supportsRtl="true"
+                  android:theme="@style/Theme.AppCompat.NoActionBar"
+                  android:usesCleartextTraffic="true">
+
+                  <activity
+                      android:name=".SplashActivity"
+                      android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+                  </activity>
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:configChanges="orientation|screenSize|keyboardHidden"
+                      android:exported="false" />
+
+                  <activity
+                      android:name=".PermissionSetupActivity"
+                      android:exported="false" />
+
+                  <service
+                      android:name=".AutoWatchService"
+                      android:exported="true"
+                      android:label="Farmo Watch Assistant"
+                      android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+                      <intent-filter>
+                          <action android:name="android.accessibilityservice.AccessibilityService" />
+                      </intent-filter>
+                      <meta-data
+                          android:name="android.accessibilityservice"
+                          android:resource="@xml/accessibility_service_config" />
+                  </service>
+              </application>
+          </manifest>
+          EOF
+
+          # Splash Screen -> Opens Website (MainActivity) Directly!
+          cat << 'EOF' > app/src/main/java/com/fomo/earn/SplashActivity.java
+          package com.fomo.earn;
+
+          import android.annotation.SuppressLint;
+          import android.content.Intent;
+          import android.os.Bundle;
+          import android.os.Handler;
+          import android.os.Looper;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          @SuppressLint("CustomSplashScreen")
+          public class SplashActivity extends AppCompatActivity {
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_splash);
+
+                  // 1.5s splash then directly open Website in MainActivity!
+                  new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                      startActivity(new Intent(SplashActivity.this, MainActivity.class));
+                      finish();
+                  }, 1500);
+              }
+          }
+          EOF
+
+          # MainActivity: Loads Web Dashboard, provides Native Bridge
+          cat << 'EOF' > app/src/main/java/com/fomo/earn/MainActivity.java
+          package com.fomo.earn;
+
+          import android.annotation.SuppressLint;
+          import android.content.Context;
+          import android.content.Intent;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.os.PowerManager;
+          import android.provider.Settings;
+          import android.webkit.CookieManager;
+          import android.webkit.JavascriptInterface;
+          import android.webkit.WebResourceRequest;
+          import android.webkit.WebSettings;
+          import android.webkit.WebView;
+          import android.webkit.WebViewClient;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class MainActivity extends AppCompatActivity {
+
+              public static final String SITE_URL = "http://zaicash.gamer.gd/index.php?app=1";
+              private WebView webView;
+              private boolean isPageFinished = false;
+
+              @SuppressLint("SetJavaScriptEnabled")
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_main);
+
+                  webView = findViewById(R.id.mainWebView);
+                  WebSettings s = webView.getSettings();
+                  s.setJavaScriptEnabled(true);
+                  s.setDomStorageEnabled(true);
+                  s.setDatabaseEnabled(true);
+                  s.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
+
+                  CookieManager.getInstance().setAcceptCookie(true);
+                  CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
+
+                  webView.addJavascriptInterface(new AndroidBridge(this), "AndroidBridge");
+                  webView.setWebViewClient(new WebViewClient() {
+                      @Override
+                      public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                          String url = request.getUrl().toString();
+                          if (url.startsWith("intent:") || url.startsWith("vnd.youtube:")) {
+                              try {
+                                  Intent intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME);
+                                  intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                  startActivity(intent);
+                              } catch (Exception ignored) {}
+                              return true;
+                          }
+                          return false;
+                      }
+
+                      @Override
+                      public void onPageFinished(WebView view, String url) {
+                          super.onPageFinished(view, url);
+                          isPageFinished = true;
+                          syncPermissionsToWeb();
+                      }
+                  });
+
+                  webView.loadUrl(SITE_URL);
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  if (isPageFinished) {
+                      syncPermissionsToWeb();
+                  }
+              }
+
+              public boolean areAllPermissionsGranted() {
+                  String expected = getPackageName() + "/" + AutoWatchService.class.getName();
+                  String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                  boolean p1 = enabled != null && enabled.contains(expected);
+                  boolean p2 = Settings.canDrawOverlays(this);
+                  boolean p3 = Settings.System.canWrite(this);
+                  PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                  boolean p4 = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+                  return p1 && p2 && p3 && p4;
+              }
+
+              public void syncPermissionsToWeb() {
+                  String expected = getPackageName() + "/" + AutoWatchService.class.getName();
+                  String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                  boolean p1 = enabled != null && enabled.contains(expected);
+                  boolean p2 = Settings.canDrawOverlays(this);
+                  boolean p3 = Settings.System.canWrite(this);
+                  PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                  boolean p4 = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+
+                  String js = "(function() {" +
+                          "if (typeof grantedPerms !== 'undefined') {" +
+                          "  grantedPerms[1] = " + p1 + ";" +
+                          "  grantedPerms[2] = " + p2 + ";" +
+                          "  grantedPerms[3] = " + p3 + ";" +
+                          "  grantedPerms[4] = " + p4 + ";" +
+                          "  function update(id, ok) {" +
+                          "    var b = document.getElementById('p-btn-' + id);" +
+                          "    if (b) {" +
+                          "      b.innerText = ok ? 'Granted ✓' : 'Grant';" +
+                          "      b.className = ok ? 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-green-500/20 text-green-300 border border-green-500/40' : 'px-3.5 py-1.5 rounded-xl text-xs font-bold bg-purple-700 text-purple-200';" +
+                          "    }" +
+                          "  }" +
+                          "  update(1, " + p1 + ");" +
+                          "  update(2, " + p2 + ");" +
+                          "  update(3, " + p3 + ");" +
+                          "  update(4, " + p4 + ");" +
+                          "}" +
+                          "})();";
+
+                  webView.post(() -> webView.evaluateJavascript(js, null));
+              }
+
+              public class AndroidBridge {
+                  private final Context context;
+
+                  public AndroidBridge(Context context) {
+                      this.context = context;
+                  }
+
+                  @JavascriptInterface
+                  public void checkPermissions() {
+                      runOnUiThread(() -> syncPermissionsToWeb());
+                  }
+
+                  @JavascriptInterface
+                  public boolean checkAllPermissionsGranted() {
+                      return areAllPermissionsGranted();
+                  }
+
+                  @JavascriptInterface
+                  public void openPermissionSetup() {
+                      startActivity(new Intent(context, PermissionSetupActivity.class));
+                  }
+
+                  @JavascriptInterface
+                  public void requestPerm(int step) {
+                      try {
+                          switch (step) {
+                              case 1:
+                                  startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+                                  break;
+                              case 2:
+                                  startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName())));
+                                  break;
+                              case 3:
+                                  startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName())));
+                                  break;
+                              case 4:
+                                  Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                                  intent.setData(Uri.parse("package:" + getPackageName()));
+                                  startActivity(intent);
+                                  break;
+                          }
+                      } catch (Exception ignored) {}
+                  }
+
+                  @JavascriptInterface
+                  public void launchAutoWatch(String videoId, int taskId) {
+                      AutoWatchService.startSession(context, taskId, videoId, 15);
+
+                      Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + videoId));
+                      intent.setPackage("com.google.android.youtube");
+                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+
+                      try {
+                          context.startActivity(intent);
+                      } catch (Exception e) {
+                          Intent web = new Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/watch?v=" + videoId));
+                          web.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                          context.startActivity(web);
+                      }
+                  }
+
+                  // Stop watching from inside the App
+                  @JavascriptInterface
+                  public void stopAutoWatch() {
+                      AutoWatchService.stopSession();
+                  }
+              }
+          }
+          EOF
+
+          # PermissionSetupActivity
+          cat << 'EOF' > app/src/main/java/com/fomo/earn/PermissionSetupActivity.java
+          package com.fomo.earn;
+
+          import android.content.Context;
+          import android.content.Intent;
+          import android.graphics.Color;
+          import android.net.Uri;
+          import android.os.Bundle;
+          import android.os.PowerManager;
+          import android.provider.Settings;
+          import android.view.View;
+          import android.widget.Button;
+          import android.widget.TextView;
+          import androidx.appcompat.app.AppCompatActivity;
+
+          public class PermissionSetupActivity extends AppCompatActivity {
+
+              private TextView tv1, tv2, tv3, tv4;
+              private Button btnContinue;
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+                  setContentView(R.layout.activity_permission_setup);
+
+                  tv1 = findViewById(R.id.tvStatus1);
+                  tv2 = findViewById(R.id.tvStatus2);
+                  tv3 = findViewById(R.id.tvStatus3);
+                  tv4 = findViewById(R.id.tvStatus4);
+                  btnContinue = findViewById(R.id.btnContinueToApp);
+
+                  findViewById(R.id.btnGrant1).setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)));
+                  findViewById(R.id.btnGrant2).setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()))));
+                  findViewById(R.id.btnGrant3).setOnClickListener(v -> startActivity(new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS, Uri.parse("package:" + getPackageName()))));
+                  findViewById(R.id.btnGrant4).setOnClickListener(v -> {
+                      Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                      intent.setData(Uri.parse("package:" + getPackageName()));
+                      startActivity(intent);
+                  });
+
+                  btnContinue.setOnClickListener(v -> finish());
+              }
+
+              @Override
+              protected void onResume() {
+                  super.onResume();
+                  refreshUI();
+              }
+
+              private void refreshUI() {
+                  String expected = getPackageName() + "/" + AutoWatchService.class.getName();
+                  String enabled = Settings.Secure.getString(getContentResolver(), Settings.Secure.ENABLED_ACCESSIBILITY_SERVICES);
+                  boolean p1 = enabled != null && enabled.contains(expected);
+                  boolean p2 = Settings.canDrawOverlays(this);
+                  boolean p3 = Settings.System.canWrite(this);
+                  PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+                  boolean p4 = pm != null && pm.isIgnoringBatteryOptimizations(getPackageName());
+
+                  updateText(tv1, p1);
+                  updateText(tv2, p2);
+                  updateText(tv3, p3);
+                  updateText(tv4, p4);
+
+                  if (p1 && p2 && p3 && p4) {
+                      btnContinue.setVisibility(View.VISIBLE);
+                  } else {
+                      btnContinue.setVisibility(View.GONE);
+                  }
+              }
+
+              private void updateText(TextView tv, boolean ok) {
+                  if (ok) {
+                      tv.setText("✓ Permission Granted");
+                      tv.setTextColor(Color.parseColor("#10B981"));
+                  } else {
+                      tv.setText("✗ Permission Required");
+                      tv.setTextColor(Color.parseColor("#EF4444"));
+                  }
+              }
+          }
+          EOF
+
+          # AutoWatchService: Precision YouTube Ad & Playback Detection + Stop Action
+          cat << 'EOF' > app/src/main/java/com/fomo/earn/AutoWatchService.java
+          package com.fomo.earn;
+
+          import android.accessibilityservice.AccessibilityService;
+          import android.annotation.SuppressLint;
+          import android.content.Context;
+          import android.content.Intent;
+          import android.graphics.PixelFormat;
+          import android.net.Uri;
+          import android.os.Build;
+          import android.os.Handler;
+          import android.os.Looper;
+          import android.provider.Settings;
+          import android.view.Gravity;
+          import android.view.LayoutInflater;
+          import android.view.MotionEvent;
+          import android.view.View;
+          import android.view.ViewConfiguration;
+          import android.view.WindowManager;
+          import android.view.accessibility.AccessibilityEvent;
+          import android.view.accessibility.AccessibilityNodeInfo;
+          import android.webkit.CookieManager;
+          import android.widget.Button;
+          import android.widget.TextView;
+          import android.widget.Toast;
+          import okhttp3.*;
+          import org.json.JSONObject;
+          import java.io.IOException;
+          import java.util.concurrent.TimeUnit;
+
+          public class AutoWatchService extends AccessibilityService {
+
+              private static final String YOUTUBE_PKG = "com.google.android.youtube";
+              public static final String API_BASE = "http://zaicash.gamer.gd/index.php";
+
+              public static boolean isTaskActive = false;
+              public static int activeTaskId = 0;
+              public static String activeVideoId = "";
+              public static int targetSeconds = 15;
+
+              private WindowManager windowManager;
+              private View overlayView;
+              private TextView tvCounter, tvStatus;
+              private Button btnStop;
+
+              private Handler handler;
+              private Runnable counterRunnable;
+              private int watchedSeconds = 0;
+              private boolean isCounting = false;
+              private boolean isAdOrLoading = false;
+              private boolean isPaused = false;
+
+              private OkHttpClient client;
+
+              public static void startSession(Context ctx, int taskId, String vid, int duration) {
+                  isTaskActive = true;
+                  activeTaskId = taskId;
+                  activeVideoId = vid;
+                  targetSeconds = duration;
+              }
+
+              public static void stopSession() {
+                  isTaskActive = false;
+                  activeTaskId = 0;
+                  activeVideoId = "";
+              }
+
+              @Override
+              public void onCreate() {
+                  super.onCreate();
+                  handler = new Handler(Looper.getMainLooper());
+                  client = new OkHttpClient.Builder().connectTimeout(12, TimeUnit.SECONDS).build();
+              }
+
+              @Override
+              public void onServiceConnected() {
+                  super.onServiceConnected();
+                  windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+                  createOverlayStrip();
+              }
+
+              @SuppressLint({"InflateParams", "ClickableViewAccessibility"})
+              private void createOverlayStrip() {
+                  if (overlayView != null || !Settings.canDrawOverlays(this)) return;
+
+                  int type = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
+                          ? WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                          : WindowManager.LayoutParams.TYPE_PHONE;
+
+                  WindowManager.LayoutParams p = new WindowManager.LayoutParams(
+                          WindowManager.LayoutParams.WRAP_CONTENT,
+                          WindowManager.LayoutParams.WRAP_CONTENT,
+                          type,
+                          WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+                          PixelFormat.TRANSLUCENT
+                  );
+                  p.gravity = Gravity.TOP | Gravity.END;
+                  p.x = 24;
+                  p.y = 120;
+
+                  try {
+                      overlayView = LayoutInflater.from(this).inflate(R.layout.overlay_timer, null);
+                      tvCounter = overlayView.findViewById(R.id.tvCounterProgress);
+                      tvStatus = overlayView.findViewById(R.id.tvPlayStatus);
+                      btnStop = overlayView.findViewById(R.id.btnOverlayStop);
+
+                      btnStop.setOnClickListener(v -> {
+                          stopSession();
+                          freezeCounter();
+                          if (overlayView != null) overlayView.setVisibility(View.GONE);
+                          Toast.makeText(getApplicationContext(), "Watch Stopped", Toast.LENGTH_SHORT).show();
+                      });
+
+                      final int touchSlop = ViewConfiguration.get(this).getScaledTouchSlop();
+                      overlayView.setOnTouchListener(new View.OnTouchListener() {
+                          private int initX, initY;
+                          private float touchX, touchY;
+                          private boolean isDragging = false;
+
+                          @Override
+                          public boolean onTouch(View v, MotionEvent e) {
+                              switch (e.getAction()) {
+                                  case MotionEvent.ACTION_DOWN:
+                                      initX = p.x;
+                                      initY = p.y;
+                                      touchX = e.getRawX();
+                                      touchY = e.getRawY();
+                                      isDragging = false;
+                                      return false;
+                                  case MotionEvent.ACTION_MOVE:
+                                      int deltaX = (int)(e.getRawX() - touchX);
+                                      int deltaY = (int)(e.getRawY() - touchY);
+                                      if (Math.abs(deltaX) > touchSlop || Math.abs(deltaY) > touchSlop) {
+                                          isDragging = true;
+                                      }
+                                      if (isDragging) {
+                                          p.x = initX - deltaX;
+                                          p.y = initY + deltaY;
+                                          try { windowManager.updateViewLayout(overlayView, p); } catch (Exception ignored) {}
+                                          return true;
+                                      }
+                                      return false;
+                                  case MotionEvent.ACTION_UP:
+                                      return isDragging;
+                              }
+                              return false;
+                          }
+                      });
+
+                      overlayView.setVisibility(View.GONE);
+                      windowManager.addView(overlayView, p);
+                  } catch (Exception ignored) {
+                      overlayView = null;
+                  }
+              }
+
+              @Override
+              public void onAccessibilityEvent(AccessibilityEvent event) {
+                  if (!isTaskActive || activeVideoId.isEmpty()) {
+                      freezeCounter();
+                      if (overlayView != null) overlayView.setVisibility(View.GONE);
+                      return;
+                  }
+
+                  if (event == null || event.getPackageName() == null) return;
+                  String pkg = event.getPackageName().toString();
+
+                  if (YOUTUBE_PKG.equals(pkg)) {
+                      if (overlayView == null) createOverlayStrip();
+                      if (overlayView != null) overlayView.setVisibility(View.VISIBLE);
+
+                      AccessibilityNodeInfo root = getRootInActiveWindow();
+                      inspectPlayback(root);
+
+                      if (isAdOrLoading) {
+                          if (tvStatus != null) tvStatus.setText("Ad/Loading");
+                          freezeCounter();
+                      } else if (isPaused) {
+                          if (tvStatus != null) tvStatus.setText("Paused");
+                          freezeCounter();
+                      } else {
+                          if (tvStatus != null) tvStatus.setText("● Playing");
+                          if (!isCounting) startTicking();
+                      }
+                  } else {
+                      freezeCounter();
+                      if (overlayView != null) overlayView.setVisibility(View.GONE);
+                  }
+              }
+
+              private void inspectPlayback(AccessibilityNodeInfo node) {
+                  if (node == null) return;
+                  isAdOrLoading = scanForAd(node);
+                  isPaused = scanForPlayButton(node);
+              }
+
+              private boolean scanForAd(AccessibilityNodeInfo n) {
+                  if (n == null) return false;
+                  CharSequence text = n.getText();
+                  CharSequence desc = n.getContentDescription();
+                  if (text != null) {
+                      String s = text.toString().toLowerCase();
+                      if (s.contains("skip ad") || s.contains("ad 1 of") || s.contains("ad 2 of") || s.contains("sponsored") || s.contains("visit advertiser")) return true;
+                  }
+                  if (desc != null) {
+                      String s = desc.toString().toLowerCase();
+                      if (s.contains("skip ad") || s.contains("sponsored")) return true;
+                  }
+                  for (int i = 0; i < n.getChildCount(); i++) {
+                      if (scanForAd(n.getChild(i))) return true;
+                  }
+                  return false;
+              }
+
+              private boolean scanForPlayButton(AccessibilityNodeInfo n) {
+                  if (n == null) return false;
+                  CharSequence desc = n.getContentDescription();
+                  if (desc != null && desc.toString().equalsIgnoreCase("play video")) return true;
+
+                  for (int i = 0; i < n.getChildCount(); i++) {
+                      if (scanForPlayButton(n.getChild(i))) return true;
+                  }
+                  return false;
+              }
+
+              private void startTicking() {
+                  isCounting = true;
+                  if (counterRunnable != null) handler.removeCallbacks(counterRunnable);
+
+                  counterRunnable = new Runnable() {
+                      @Override
+                      public void run() {
+                          if (!isCounting || !isTaskActive) return;
+
+                          watchedSeconds++;
+                          if (tvCounter != null) tvCounter.setText(watchedSeconds + "/" + targetSeconds);
+
+                          if (watchedSeconds >= targetSeconds) {
+                              freezeCounter();
+                              completeTaskAndLoadNext();
+                              return;
+                          }
+
+                          handler.postDelayed(this, 1000);
+                      }
+                  };
+                  handler.postDelayed(counterRunnable, 1000);
+              }
+
+              private void freezeCounter() {
+                  isCounting = false;
+                  if (counterRunnable != null) handler.removeCallbacks(counterRunnable);
+              }
+
+              private void completeTaskAndLoadNext() {
+                  final int finishedTask = activeTaskId;
+
+                  RequestBody form = new FormBody.Builder()
+                          .add("task_id", String.valueOf(finishedTask))
+                          .add("watched_seconds", String.valueOf(watchedSeconds))
+                          .build();
+
+                  Request req = new Request.Builder()
+                          .url(API_BASE + "?api=claim_reward")
+                          .post(form)
+                          .build();
+
+                  client.newCall(req).enqueue(new Callback() {
+                      @Override
+                      public void onFailure(Call call, IOException e) {}
+
+                      @Override
+                      public void onResponse(Call call, Response response) {
+                          if (response.isSuccessful()) {
+                              new Handler(Looper.getMainLooper()).post(() -> {
+                                  Toast.makeText(getApplicationContext(), "Task Completed — Reward Added", Toast.LENGTH_SHORT).show();
+                              });
+                              fetchAndOpenNextTask();
+                          }
+                      }
+                  });
+              }
+
+              private void fetchAndOpenNextTask() {
+                  Request req = new Request.Builder().url(API_BASE + "?api=get_video").get().build();
+
+                  client.newCall(req).enqueue(new Callback() {
+                      @Override
+                      public void onFailure(Call call, IOException e) {}
+
+                      @Override
+                      public void onResponse(Call call, Response response) {
+                          try {
+                              String body = response.body() != null ? response.body().string() : "";
+                              JSONObject json = new JSONObject(body);
+
+                              if ("success".equals(json.optString("status"))) {
+                                  int nextTask = json.optInt("task_id");
+                                  String nextVid = json.optString("id");
+                                  int duration = json.optInt("duration", 15);
+
+                                  activeTaskId = nextTask;
+                                  activeVideoId = nextVid;
+                                  targetSeconds = duration;
+                                  watchedSeconds = 0;
+                                  isTaskActive = true;
+
+                                  new Handler(Looper.getMainLooper()).post(() -> {
+                                      if (tvCounter != null) tvCounter.setText("0/" + targetSeconds);
+                                      if (tvStatus != null) tvStatus.setText("Loading Next...");
+
+                                      Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("vnd.youtube:" + nextVid));
+                                      intent.setPackage("com.google.android.youtube");
+                                      intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                      try {
+                                          startActivity(intent);
+                                      } catch (Exception ignored) {}
+                                  });
+                              } else {
+                                  stopSession();
+                                  freezeCounter();
+                                  new Handler(Looper.getMainLooper()).post(() -> {
+                                      if (overlayView != null) overlayView.setVisibility(View.GONE);
+                                      Toast.makeText(getApplicationContext(), "No More Tasks Available", Toast.LENGTH_LONG).show();
+                                  });
+                              }
+                          } catch (Exception ignored) {}
+                      }
+                  });
+              }
+
+              @Override
+              public void onInterrupt() {
+                  freezeCounter();
+              }
+
+              @Override
+              public void onDestroy() {
+                  super.onDestroy();
+                  freezeCounter();
+                  if (overlayView != null && windowManager != null) {
+                      try { windowManager.removeView(overlayView); } catch (Exception ignored) {}
+                      overlayView = null;
+                  }
+              }
+          }
+          EOF
+
+      - name: Build Debug APK with Gradle Wrapper
+        run: |
+          gradle wrapper --gradle-version 8.4
+          chmod +x ./gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Output fomo-earn.apk
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk fomo-earn.apk
+
+      - name: Upload APK as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: fomo-earn-apk
+          path: fomo-earn.apk
